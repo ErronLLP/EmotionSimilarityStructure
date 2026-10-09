@@ -1,0 +1,451 @@
+<html class=""><head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="dist/remodal.css">
+    <link rel="stylesheet" href="dist/remodal-default-theme.css">
+    <script src="dist/remodal.js"></script>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+        <style type="text/css">
+            body {font: 14px GillSansRegular, "Gill Sans MT", "Gill Sans", "Trebuchet MS", sans-serif; width: 1200px; background: url(manifoldbg3.png) no-repeat; background-color: black; background-size:1176px 1043px;}
+            .canvas {position: relative}
+            .genre {padding: 0px 2px; position: absolute; white-space: nowrap; cursor: pointer; overflow: hidden; font-size:150%; } 
+            .genre:hover { font-size:300%}
+            .genre:active {
+                cursor: grabbing;
+                cursor: -moz-grabbing;
+                cursor: -webkit-grabbing;
+            }
+            .genre[played]:before {content: "∂B" !important; color: black !important}
+            #mirror .genre:hover {color: white !important}
+            #mirror .genre[played]:before {content: "∂B" !important; color: white !important}
+            #mirror .current.genre[played]:before {color: gray !important}
+            .genrelink {padding: 0px 2px; position: absolute; white-space: nowrap;}
+            #mirror .genre[played] {color: #E6ADB7 !important}
+            .title {float: left; font-weight: bold; font-size: 200%; margin-right: 32px}
+            .title a {color: black}
+            .showsong {position: absolute; left: 300px}
+            form {display: inline; white-space: nowrap;}
+            a, .related a {text-decoration: none; color: teal}
+            a:hover, .fakelink:hover {color: FireBrick !important}
+            .fakelink {cursor: pointer; color: teal}
+            .genre.current {font-weight: bold; padding: 1px 2px; background: whitesmoke; border-color: black; border-style: solid;
+                border-width: 1px 1px 1px 8px; z-index: 1000}
+        .genre.current .navlink {background: whitesmoke}
+        .navlink {display: none; color: FireBrick; background: white; padding: 0px 2px}
+        #mirror .navlink {background: inherit}
+        .navlink:hover {color: white !important; background: black !important}
+        .genre.current .navlink, .genre:hover .navlink, .genrelink:hover .navlink {display: inline; z-index: 10000}
+        .genrelink:hover .navlink {color: black}
+        .related {color: gray; margin-top: 32px; width: 1500px;}
+        .related a {white-space: nowrap}
+        .volcontrol {display: none; color: silver; cursor: pointer;font-weight: normal; font-size: 16px;}
+        
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+        }
+        
+        li {
+            float: left;
+        }
+        
+        li a, .dropbtn {
+            display: inline-block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+        
+        li a:hover, .dropdown:hover .dropbtn {
+            background-color: red;
+        }
+        
+        li.dropdown {
+            display: inline-block;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+        
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+            z-index: 100;
+        }
+        
+        .dropdown-content a:hover {background-color: #f1f1f1}
+        
+        .show {display:block;}
+        
+        
+        .ylabel  { -ms-transform: rotate(-90deg); -webkit-transform: rotate(-90deg); transform: rotate(-90deg); transform-origin: top left;}
+        
+        #bottombar {
+            top: 5;
+            left: 5;
+            position: fixed;
+            color: white;
+            right: 0;
+            text-align: left;
+        }
+        
+        #dimbar {
+            top: 0;
+            right: 5;
+            color: white;
+            position: fixed;
+            right: 0;
+            text-align: left;
+            z-index: -10000;
+        }            
+    
+    
+.ylabel  { -ms-transform: rotate(-90deg); -webkit-transform: rotate(-90deg); transform: rotate(-90deg); transform-origin: top left;}
+</style>
+        
+        
+        <script type="text/javascript">
+            var nowplaying = '';
+            var nowpending = '';
+            var gdivs = [];
+            var scandivs = [];
+            var clicknumber = 1;
+            
+            function redraw() {
+                document.forms[0].submit();
+            }
+        
+        function getpreviewurl(id) {
+            var http_request = new XMLHttpRequest();
+            url = 'https://bsil.berkeley.edu/wp-content/uploads/2017/09/' + id;
+            return url;
+        }
+        
+        var currentZ = 1;
+        function playx(key, genre, tag, dimdata, me) {
+            previewurl = getpreviewurl(key);
+            if (previewurl) {
+                var gif = document.createElement("video");
+                var source = document.createElement("source");
+                gif.id = "currentimg"
+                gif.src = previewurl;
+                source.src = previewurl;
+                source.type = "video/mp4";
+                gif.height = 320;
+                gif.autoplay = "autoplay";
+                gif.loop = "loop";
+                gif.alt = "Unable to find image";
+                
+                // This next line will just add it to the <body> tag
+                me.appendChild(gif);
+                me.style.zIndex = currentZ + 1;
+                currentZ = currentZ + 1;
+                document.getElementById("bottombar").innerHTML = tag;
+                dataorder = [0,1,2,3,4,5,6,7,8,9,11,12,10,13];
+                for (i=0; i<14; i++) {
+                    data[0][i].value = dimdata[dataorder[i]];
+                }
+                RadarChart(".radarChart", data, radarChartOptions);
+            }
+        }
+        
+        function unplayx(key, genre, me) {
+            var img = document.getElementById("currentimg");
+            // me.removeChild(img);
+            $(me).children().filter("video").each(function(){
+                                                  this.pause(); // can't hurt
+                                                  delete this; // @sparkey reports that this did the trick (even though it makes no sense!)
+                                                  $(this).remove(); // this is probably what actually does the trick
+                                                  });
+        }
+        
+        function findPosX(obj)
+        {
+            var left = 0;
+            if(obj.offsetParent)
+            {
+                while(1)
+                {
+                    left += obj.offsetLeft;
+                    if(!obj.offsetParent)
+                    break;
+                    obj = obj.offsetParent;
+                }
+            }
+            else if(obj.x)
+            {
+                left += obj.x;
+            }
+            return left;
+        }
+        
+        function findPosY(obj)
+        {
+            var top = 0;
+            if(obj.offsetParent)
+            {
+                while(1)
+                {
+                    top += obj.offsetTop;
+                    if(!obj.offsetParent)
+                    break;
+                    obj = obj.offsetParent;
+                }
+            }
+            else if(obj.y)
+            {
+                top += obj.y;
+            }
+            return top;
+        }
+        
+        function playhere(me, url) {
+            var rp = document.getElementById('rp');
+            rp.style.display = 'none';
+            rp.firstChild.onload = function() {
+                rp.style.top = findPosY(me) + 20;
+                rleft = findPosX(me);
+                if (rleft + 500 > window.innerWidth) {
+                    rleft = window.innerWidth - 500;
+                    if (rleft < 0) {
+                        rleft = 0;
+                    }
+                }
+                rp.style.left = rleft;
+                rp.style.display = 'block';
+            }
+            rp.lastChild.src = url;
+        }
+        
+        function highlight(which) {
+            if (gdivs.length == 0) {
+                gdivs = document.getElementsByClassName('genre');
+            }
+            for (i=0; i<gdivs.length; i++) {
+                thisdiv = gdivs[i];
+                thistext = thisdiv.firstChild.textContent;
+                if (thisdiv.className.indexOf('scanme') > -1) {
+                    basename = 'genre scanme';
+                } else {
+                    basename = 'genre';
+                }
+                if (which.length > 0 && which.trim() == thistext.trim().replace('"', '')) {
+                    thisdiv.className = basename + ' current';
+                    thisdiv.scrollIntoViewIfNeeded();
+                } else {
+                    thisdiv.className = basename;
+                }
+            }
+        }
+        
+        function scan(state) {
+            var spotifyplayer = document.getElementById('spotifyplayer');
+            if (state == 'stop') {
+                spotifyplayer.pause();
+                highlight('');
+                window.clearTimeout(nowpending);
+            } else {
+                if (scandivs.length == 0) {
+                    if (gdivs.length == 0) {
+                        gdivs = document.getElementsByClassName('scanme');
+                    }
+                    for (i=0; i<gdivs.length; i++) {
+                        thisdiv = gdivs[i];
+                        if (thisdiv.getAttribute('scan')) {
+                            scandivs.push(thisdiv)
+                        }
+                    }
+                }
+                picked = scandivs[Math.floor(Math.random() * scandivs.length)];
+                picked.onclick();
+                nowpending = window.setTimeout('scan("continue")', 6000);
+            }
+        }
+        
+        /* When the user clicks on the button,
+         toggle between hiding and showing the dropdown content */
+        function myDrop(dn) {
+            document.getElementById(dn).classList.toggle("show");
+        }
+        
+        // Close the dropdown if the user clicks outside of it
+        window.onclick = function(e) {
+            if (!e.target.matches('.dropbtn')) {
+                
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var d = 0; d < dropdowns.length; d++) {
+                    var openDropdown = dropdowns[d];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+        $( function() {
+          $( ".genre" ).draggable();
+        } );
+        $(window).load(function() {
+            var options = { };
+            $('[data-remodal-id=modal]').remodal(options).open();
+        });
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+        <script src="radarChart.js"></script>
+        <script>
+            //////////////////////////////////////////////////////////////
+            //////////////////////// Set-Up //////////////////////////////
+            //////////////////////////////////////////////////////////////
+            
+            var margin = {top: 70, right: 70, bottom: 70, left: 70},
+            width = Math.min(300, window.innerWidth - 10) - margin.left - margin.right,
+            height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
+            
+            //////////////////////////////////////////////////////////////
+            ////////////////////////// Data //////////////////////////////
+            //////////////////////////////////////////////////////////////
+            
+            var data = [
+                        [//Gif
+                         {axis:"Approach",value:5},
+                         {axis:"Arousal",value:5},
+                         {axis:"Attention",value:5},
+                         {axis:"Certainty",value:5},
+                         {axis:"Commitment",value:5},
+                         {axis:"Control",value:5},
+                         {axis:"Dominance",value:5},
+                         {axis:"Effort",value:5},
+                         {axis:"Fairness",value:5},
+                         {axis:"Identity",value:5},
+                         {axis:"Obstruction",value:5},
+                         {axis:"Safety",value:5},
+                         {axis:"Upswing",value:5},
+                         {axis:"Valence",value:5}
+                         ]
+                        ];
+                        //////////////////////////////////////////////////////////////
+                        //////////////////// Draw the Chart //////////////////////////
+                        //////////////////////////////////////////////////////////////
+                        
+                        var color = d3.scale.ordinal()
+                        .range(["#EDC951","#CC333F","#00A0B0"]);
+                        
+                        var radarChartOptions = {
+                            w: width,
+                            h: height,
+                            margin: margin,
+                            maxValue: 9,
+                            levels: 9,
+                            roundStrokes: true,
+                            color: color
+                        };
+            </script>
+        </head>
+<body style="padding-right: 0px;">
+
+    <div class="title"><a></a>
+        &nbsp;<audio id="spotifyplayer" style="display: none; vertical-align: bottom" controls="controls"></audio>
+        <span class="volcontrol" id="volcontrol"><input type="range" min="0" max="1" step=".05" value="1" onchange="document.getElementById('spotifyplayer').volume=this.value">?</span>
+    </div>
+    <div class="canvas" style="width: 1400px; height: 1150px; top: 20px; float:left">
+<div id="item5" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #659797; top: 283.0658px; left: 459.7565px;" onmouseover="playx(&quot;0005.mp4&quot;, &quot;5&quot;, &quot;42% Confusion  +  33% Anxiety  +  33% Surprise  +  25% Sadness  +  8% Empathic Pain  +  8% Fear  +  8% Horror  +  8% Interest&quot;,[ 1,6.8,7.6, 3,4.4,1.1,3.8, 4,3.2,3.7,1.3, 4, 1,2.6], this);" onmouseout="unplayx(&quot;0005.mp4&quot;, &quot;1&quot;, this);" title="5"><b><i>K</i></b><br></div>
+<div id="item8" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #1CD03A; top: 552.0204px; left: 731.5956px;" onmouseover="playx(&quot;0008.mp4&quot;, &quot;8&quot;, &quot;67% Aesthetic Appreciation  +  25% Calmness  +  25% Interest  +  8% Anxiety  +  8% Awe  +  8% Boredom  +  8% Disappointment  +  8% Disgust  +  8% Entrancement  +  8% Sadness&quot;,[6.3, 4,6.1,6.4,4.1,8.1,3.2,1.8,6.1,3.9,5.2,2.4,7.8,6.8], this);" onmouseout="unplayx(&quot;0008.mp4&quot;, &quot;1&quot;, this);" title="8"><b><i>C</i></b><br></div>
+<div id="item26" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #3EAD5A; top: 586.4731px; left: 742.9755px;" onmouseover="playx(&quot;0026.mp4&quot;, &quot;26&quot;, &quot;67% Aesthetic Appreciation  +  33% Calmness  +  25% Awe  +  25% Entrancement  +  25% Satisfaction  +  17% Joy  +  8% Adoration  +  8% Anxiety  +  8% Excitement  +  8% Relief&quot;,[8.1,5.2,7.3,7.2,4.6,7.9,4.9,1.6, 7,4.6,7.2, 4, 7, 8], this);" onmouseout="unplayx(&quot;0026.mp4&quot;, &quot;1&quot;, this);" title="26"><b><i>C</i></b><br></div>
+<div id="item95" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #DE96AD; top: 293.1363px; left: 410.6173px;" onmouseover="playx(&quot;0095.mp4&quot;, &quot;95&quot;, &quot;38% Empathic Pain  +  23% Disgust  +  15% Guilt  +  15% Horror  +  15% Sympathy  +  8% Adoration  +  8% Amusement  +  8% Anger  +  8% Anxiety  +  8% Confusion  +  8% Disappointment  +  8% Entrancement  +  8% Fear  +  8% Surprise&quot;,[2.1,5.8,6.1,4.7,5.4,3.7,4.7,6.3,2.3,2.6,2.9, 5,2.8, 2], this);" onmouseout="unplayx(&quot;0095.mp4&quot;, &quot;1&quot;, this);" title="95"><b><i>N</i></b><br></div>
+<div id="item98" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #AA181C; top: 745.362px; left: 366.8227px;" onmouseover="playx(&quot;0098.mp4&quot;, &quot;98&quot;, &quot;54% Adoration  +  38% Amusement  +  15% Awe  +  8% Anger  +  8% Boredom  +  8% Calmness  +  8% Disgust  +  8% Joy  +  8% Relief  +  8% Triumph&quot;,[6.7,5.3, 7,6.2,6.3,7.6, 5, 1,6.7,5.7,7.4,2.7,6.8,7.8], this);" onmouseout="unplayx(&quot;0098.mp4&quot;, &quot;1&quot;, this);" title="98"><b><i>B</i></b><br></div>
+<div id="item104" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #C2AEDD; top: 307.4104px; left: 426.5745px;" onmouseover="playx(&quot;0104.mp4&quot;, &quot;104&quot;, &quot;38% Empathic Pain  +  38% Sadness  +  23% Horror  +  23% Sympathy  +  15% Surprise  +  8% Amusement  +  8% Disappointment  +  8% Fear  +  8% Romance&quot;,[1.6,4.6, 7,5.3,5.4,2.9,3.9,3.1,3.6,4.4,2.3,3.4,2.2,1.8], this);" onmouseout="unplayx(&quot;0104.mp4&quot;, &quot;1&quot;, this);" title="104"><b><i>X</i></b><br></div>
+<div id="item110" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #1B0883; top: 800.3717px; left: 935.0487px;" onmouseover="playx(&quot;0110.mp4&quot;, &quot;110&quot;, &quot;85% Craving  +  8% Admiration  +  8% Aesthetic Appreciation  +  8% Anger  +  8% Awe  +  8% Boredom  +  8% Contempt  +  8% Joy  +  8% Satisfaction&quot;,[6.9,5.8,4.8, 6,5.6,6.1,4.8, 2,5.7,5.9,5.7,5.1,6.3, 7], this);" onmouseout="unplayx(&quot;0110.mp4&quot;, &quot;1&quot;, this);" title="110"><b><i>L</i></b><br></div>
+<div id="item122" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #8E5C9C; top: 445.1117px; left: 295.6586px;" onmouseover="playx(&quot;0122.mp4&quot;, &quot;122&quot;, &quot;33% Amusement  +  27% Fear  +  20% Surprise  +  13% Anxiety  +  13% Awkwardness  +  13% Sadness  +  13% Sympathy  +  7% Empathic Pain  +  7% Excitement  +  7% Guilt&quot;,[2.7,5.6,6.2,4.7,3.3,1.7,3.9,2.9,2.9,4.6,2.1,2.7,1.9,3.8], this);" onmouseout="unplayx(&quot;0122.mp4&quot;, &quot;1&quot;, this);" title="122"><b><i>Q</i></b><br></div>
+<div id="item186" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #B2A97F; top: 182.4355px; left: 438.3554px;" onmouseover="playx(&quot;0186.mp4&quot;, &quot;186&quot;, &quot;43% Disgust  +  43% Horror  +  29% Confusion  +  21% Fear  +  14% Anxiety  +  14% Empathic Pain  +  14% Sadness  +  7% Sympathy&quot;,[ 1,3.7,3.9,2.7,1.6,1.4,2.9,6.9,1.3,1.1,1.7,5.6,1.2,1.3], this);" onmouseout="unplayx(&quot;0186.mp4&quot;, &quot;1&quot;, this);" title="186"><b><i>R</i></b><br></div>
+<div id="item203" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #A77048; top: 422.7401px; left: 652.9718px;" onmouseover="playx(&quot;0203.mp4&quot;, &quot;203&quot;, &quot;64% Boredom  +  21% Anxiety  +  7% Awkwardness  +  7% Calmness  +  7% Confusion&quot;,[5.6,3.8,4.2,3.7,4.2,6.4,4.3,2.8,5.2,4.8,4.7,4.4,6.3,5.1], this);" onmouseout="unplayx(&quot;0203.mp4&quot;, &quot;1&quot;, this);" title="203"><b><i>I</i></b><br></div>
+<div id="item222" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #946883; top: 428.8905px; left: 283.7519px;" onmouseover="playx(&quot;0222.mp4&quot;, &quot;222&quot;, &quot;46% Amusement  +  31% Horror  +  15% Awkwardness  +  15% Fear  +  8% Anxiety  +  8% Empathic Pain  +  8% Sadness  +  8% Surprise  +  8% Sympathy&quot;,[2.2,6.6,5.8,2.8,4.6,1.7,3.4,4.7,1.9,4.1,1.6, 5,2.6,2.6], this);" onmouseout="unplayx(&quot;0222.mp4&quot;, &quot;1&quot;, this);" title="222"><b><i>D</i></b><br></div>
+<div id="item231" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #504D59; top: 459.308px; left: 422.0974px;" onmouseover="playx(&quot;0231.mp4&quot;, &quot;231&quot;, &quot;31% Interest  +  31% Surprise  +  23% Excitement  +  19% Relief  +  15% Amusement  +  15% Anxiety  +  15% Awe  +  8% Admiration&quot;,[1.8,6.4,5.8,4.1,4.6,2.9,5.2,2.7,3.8,5.3, 5,5.2,2.6,3.9], this);" onmouseout="unplayx(&quot;0231.mp4&quot;, &quot;1&quot;, this);" title="231"><b><i>Ω</i></b><br></div>
+<div id="item364" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #D48D8D; top: 252.3366px; left: 340.0553px;" onmouseover="playx(&quot;0364.mp4&quot;, &quot;364&quot;, &quot;58% Fear  +  58% Horror  +  42% Anxiety  +  38% Sadness  +  33% Sympathy  +  25% Surprise  +  12% Empathic Pain  +  8% Confusion  +  8% Excitement&quot;,[4.6,5.9,6.6, 4,5.9,2.3,4.2,5.1,3.6, 6,2.1,3.1,2.2,1.4], this);" onmouseout="unplayx(&quot;0364.mp4&quot;, &quot;1&quot;, this);" title="364"><b><i>R</i></b><br></div>
+<div id="item399" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #2C2CBD; top: 556.9326px; left: 376.2109px;" onmouseover="playx(&quot;0399.mp4&quot;, &quot;399&quot;, &quot;31% Amusement  +  31% Surprise  +  27% Triumph  +  19% Admiration  +  15% Joy  +  12% Adoration  +  8% Awe  +  8% Entrancement  +  8% Excitement  +  8% Pride  +  8% Satisfaction  +  4% Envy&quot;,[6.2,4.1,5.6,5.7,5.8,6.7,5.2,3.7,6.7,6.1, 6,3.8,6.2,6.7], this);" onmouseout="unplayx(&quot;0399.mp4&quot;, &quot;1&quot;, this);" title="399"><b><i>A</i></b><br></div>
+<div id="item450" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #E2667E; top: 243.2239px; left: 466.5979px;" onmouseover="playx(&quot;0450.mp4&quot;, &quot;450&quot;, &quot;46% Fear  +  38% Anger  +  31% Disgust  +  19% Horror  +  15% Anxiety  +  15% Sadness  +  8% Contempt&quot;,[1.4, 6,5.9,3.6,3.1,2.2,4.6,4.9,2.8,2.8,3.1,4.8,2.3,1.7], this);" onmouseout="unplayx(&quot;0450.mp4&quot;, &quot;1&quot;, this);" title="450"><b><i>Q</i></b><br></div>
+<div id="item496" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #445869; top: 520.6749px; left: 628.2395px;" onmouseover="playx(&quot;0496.mp4&quot;, &quot;496&quot;, &quot;40% Aesthetic Appreciation  +  30% Amusement  +  30% Entrancement  +  20% Admiration  +  20% Awe  +  20% Excitement  +  20% Interest  +  10% Satisfaction&quot;,[6.2,6.1,6.1, 5,4.9,5.6,4.9,3.3,5.2,5.1,5.4,2.4,6.4,5.4], this);" onmouseout="unplayx(&quot;0496.mp4&quot;, &quot;1&quot;, this);" title="496"><b><i>C</i></b><br></div>
+<div id="item499" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #658D92; top: 494.8808px; left: 717.6243px;" onmouseover="playx(&quot;0499.mp4&quot;, &quot;499&quot;, &quot;60% Entrancement  +  50% Aesthetic Appreciation  +  30% Calmness  +  20% Boredom&quot;,[5.4,5.9,5.6, 5,3.8,5.7,4.6,4.3,5.2,4.2, 5, 3,5.4,4.8], this);" onmouseout="unplayx(&quot;0499.mp4&quot;, &quot;1&quot;, this);" title="499"><b><i>O</i></b><br></div>
+<div id="item520" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #7F1556; top: 140.0007px; left: 809.8371px;" onmouseover="playx(&quot;0520.mp4&quot;, &quot;520&quot;, &quot;83% Sexual Desire  +  25% Admiration  +  17% Amusement  +  17% Boredom  +  17% Craving  +  17% Entrancement  +  17% Excitement  +  8% Adoration  +  8% Aesthetic Appreciation  +  8% Awe  +  8% Interest  +  8% Romance  +  8% Surprise&quot;,[6.1,5.4,5.9,5.2,4.2,7.2,5.6,1.9,5.3,5.8,5.3,2.6,5.1,6.2], this);" onmouseout="unplayx(&quot;0520.mp4&quot;, &quot;1&quot;, this);" title="520"><b><i>Z</i></b><br></div>
+<div id="item536" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #B07045; top: 337.6149px; left: 323.6809px;" onmouseover="playx(&quot;0536.mp4&quot;, &quot;536&quot;, &quot;50% Relief  +  25% Anxiety  +  17% Anger  +  17% Fear  +  17% Surprise  +  8% Confusion  +  8% Disappointment  +  8% Disgust  +  8% Empathic Pain  +  8% Horror&quot;,[2.8,6.7,6.9,3.2,4.3, 3,4.2,3.7,5.3, 4,7.8,4.2,2.8,2.8], this);" onmouseout="unplayx(&quot;0536.mp4&quot;, &quot;1&quot;, this);" title="536"><b><i>V</i></b><br></div>
+<div id="item624" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #7C7083; top: 426.0438px; left: 501.6839px;" onmouseover="playx(&quot;0624.mp4&quot;, &quot;624&quot;, &quot;17% Anxiety  +  17% Awe  +  17% Confusion  +  17% Excitement  +  17% Fear  +  17% Interest  +  17% Sadness  +  17% Sympathy  +  8% Admiration  +  8% Aesthetic Appreciation  +  8% Amusement  +  8% Awkwardness  +  8% Joy&quot;,[3.1,5.3,6.2,4.2,4.9,4.9,4.9,3.7,4.2,2.2,4.4,3.6,2.9,3.8], this);" onmouseout="unplayx(&quot;0624.mp4&quot;, &quot;1&quot;, this);" title="624"><b><i>X</i></b><br></div>
+<div id="item677" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #5D5D9A; top: 502.1157px; left: 481.5318px;" onmouseover="playx(&quot;0677.mp4&quot;, &quot;677&quot;, &quot;27% Surprise  +  18% Amusement  +  18% Awe  +  18% Interest  +  18% Sympathy  +  14% Boredom  +  9% Adoration  +  9% Anger  +  9% Awkwardness  +  9% Disgust  +  9% Excitement  +  9% Guilt  +  9% Sadness  +  5% Anxiety&quot;,[5.6,6.3,6.3,5.8,5.8,5.1,4.7, 3,4.4,3.7,5.2,3.3,5.2,4.3], this);" onmouseout="unplayx(&quot;0677.mp4&quot;, &quot;1&quot;, this);" title="677"><b><i>Ω</i></b><br></div>
+<div id="item689" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #93473B; top: 750.8892px; left: 302.0689px;" onmouseover="playx(&quot;0689.mp4&quot;, &quot;689&quot;, &quot;45% Amusement  +  45% Joy  +  36% Adoration  +  9% Awe  +  9% Boredom  +  9% Envy  +  9% Nostalgia&quot;,[5.6,5.4,4.4,5.4,5.3,5.4,4.2, 3,5.2,4.9,5.7,4.3,5.4,6.4], this);" onmouseout="unplayx(&quot;0689.mp4&quot;, &quot;1&quot;, this);" title="689"><b><i>T</i></b><br></div>
+<div id="item719" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #6C6591; top: 348.312px; left: 383.1734px;" onmouseover="playx(&quot;0719.mp4&quot;, &quot;719&quot;, &quot;25% Confusion  +  25% Surprise  +  21% Relief  +  17% Anger  +  12% Admiration  +  12% Horror  +  8% Anxiety  +  8% Disgust  +  8% Empathic Pain  +  8% Excitement  +  8% Fear  +  8% Guilt  +  8% Satisfaction  +  8% Sympathy&quot;,[4.2, 7,7.1, 5,5.7, 4,5.3,4.3,3.7,5.7,5.3,4.8,4.2,3.3], this);" onmouseout="unplayx(&quot;0719.mp4&quot;, &quot;1&quot;, this);" title="719"><b><i>V</i></b><br></div>
+<div id="item722" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #BF644B; top: 337.3853px; left: 239.2718px;" onmouseover="playx(&quot;0722.mp4&quot;, &quot;722&quot;, &quot;50% Anxiety  +  43% Fear  +  21% Admiration  +  14% Awe  +  14% Interest  +  7% Aesthetic Appreciation  +  7% Horror  +  7% Triumph&quot;,[2.2,6.2,6.7,4.4,4.8,5.1,5.3,3.3,5.2,3.2,6.2,2.7,2.4, 4], this);" onmouseout="unplayx(&quot;0722.mp4&quot;, &quot;1&quot;, this);" title="722"><b><i>F</i></b><br></div>
+<div id="item746" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #CF859E; top: 276.457px; left: 371.7986px;" onmouseover="playx(&quot;0746.mp4&quot;, &quot;746&quot;, &quot;29% Empathic Pain  +  29% Fear  +  29% Horror  +  21% Anger  +  21% Anxiety  +  21% Sadness  +  21% Surprise  +  21% Sympathy  +  7% Confusion  +  7% Disgust  +  7% Interest  +  7% Relief&quot;,[1.3,5.7,5.4,4.1,4.9,1.6,3.7,5.6,2.1,4.1,3.2,3.9,1.2,1.1], this);" onmouseout="unplayx(&quot;0746.mp4&quot;, &quot;1&quot;, this);" title="746"><b><i>N</i></b><br></div>
+<div id="item763" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #5F618E; top: 453.4971px; left: 627.5985px;" onmouseover="playx(&quot;0763.mp4&quot;, &quot;763&quot;, &quot;27% Interest  +  23% Boredom  +  23% Calmness  +  18% Admiration  +  18% Entrancement  +  18% Joy  +  18% Satisfaction  +  9% Awe  +  9% Contempt&quot;,[5.6, 4,5.2,5.6,4.6,6.2,4.6,3.7,6.1,4.8,6.1,3.7,5.4,5.8], this);" onmouseout="unplayx(&quot;0763.mp4&quot;, &quot;1&quot;, this);" title="763"><b><i>I</i></b><br></div>
+<div id="item815" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #7E5E56; top: 748.843px; left: 376.7439px;" onmouseover="playx(&quot;0815.mp4&quot;, &quot;815&quot;, &quot;42% Adoration  +  25% Amusement  +  25% Awe  +  25% Boredom  +  25% Calmness  +  17% Sadness  +  8% Aesthetic Appreciation  +  8% Craving  +  8% Interest  +  8% Satisfaction  +  8% Sympathy&quot;,[6.6,3.6,5.4,5.6,6.7,7.2,3.4,2.6,5.9,4.4,6.2,3.6,6.4,5.3], this);" onmouseout="unplayx(&quot;0815.mp4&quot;, &quot;1&quot;, this);" title="815"><b><i>B</i></b><br></div>
+<div id="item825" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #805358; top: 396.77px; left: 380.6001px;" onmouseover="playx(&quot;0825.mp4&quot;, &quot;825&quot;, &quot;33% Fear  +  25% Anxiety  +  25% Awe  +  25% Surprise  +  17% Interest  +  8% Confusion  +  8% Contempt  +  8% Craving&quot;,[6.6,6.4,6.4,5.2,4.4,6.3,5.2,4.4,5.6,4.8,7.6,3.6,3.1,6.3], this);" onmouseout="unplayx(&quot;0825.mp4&quot;, &quot;1&quot;, this);" title="825"><b><i>Q</i></b><br></div>
+<div id="item894" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #2F4A38; top: 685.1468px; left: 336.9421px;" onmouseover="playx(&quot;0894.mp4&quot;, &quot;894&quot;, &quot;54% Amusement  +  46% Awe  +  23% Joy  +  15% Relief  +  15% Satisfaction  +  15% Surprise  +  12% Interest  +  8% Admiration  +  8% Adoration&quot;,[6.8,6.3,6.4,6.9,5.8,7.9,4.6,2.3,7.2, 5,7.6,2.4,5.4,7.1], this);" onmouseout="unplayx(&quot;0894.mp4&quot;, &quot;1&quot;, this);" title="894"><b><i>G</i></b><br></div>
+<div id="item896" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #171076; top: 793.9496px; left: 958.0412px;" onmouseover="playx(&quot;0896.mp4&quot;, &quot;896&quot;, &quot;100% Craving  +  23% Satisfaction  +  15% Interest  +  8% Adoration  +  8% Aesthetic Appreciation  +  8% Awe  +  8% Joy&quot;,[ 8, 6, 6,6.9,4.1,7.7,4.7,1.7, 6, 3,6.4,2.7,6.8,7.1], this);" onmouseout="unplayx(&quot;0896.mp4&quot;, &quot;1&quot;, this);" title="896"><b><i>L</i></b><br></div>
+<div id="item1034" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #8C6C63; top: 731.9481px; left: 448.2713px;" onmouseover="playx(&quot;1034.mp4&quot;, &quot;1034&quot;, &quot;73% Joy  +  27% Adoration  +  27% Awe  +  27% Satisfaction  +  18% Excitement  +  9% Admiration  +  9% Anxiety  +  9% Empathic Pain  +  9% Interest  +  9% Sympathy&quot;,[7.3,5.9, 7,6.9,7.1,7.8,5.1,1.9,5.7,6.6,7.4,3.2,6.7,8.3], this);" onmouseout="unplayx(&quot;1034.mp4&quot;, &quot;1&quot;, this);" title="1034"><b><i>T</i></b><br></div>
+<div id="item1129" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #845659; top: 224.0001px; left: 750.5303px;" onmouseover="playx(&quot;1129.mp4&quot;, &quot;1129&quot;, &quot;36% Sexual Desire  +  27% Awkwardness  +  27% Boredom  +  18% Aesthetic Appreciation&quot;,[5.7,5.4,6.1,5.1,5.6,5.8,4.7, 3,5.3,4.2,5.8,4.1,5.1,5.4], this);" onmouseout="unplayx(&quot;1129.mp4&quot;, &quot;1&quot;, this);" title="1129"><b><i>Zf</i></b><br></div>
+<div id="item1150" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #6568B9; top: 369.825px; left: 375.8432px;" onmouseover="playx(&quot;1150.mp4&quot;, &quot;1150&quot;, &quot;46% Surprise  +  23% Sadness  +  15% Amusement  +  15% Anxiety  +  15% Excitement  +  15% Fear  +  8% Boredom  +  8% Confusion  +  8% Disgust  +  8% Guilt  +  8% Joy&quot;,[4.1,6.4,7.6,4.8,6.2,3.3,5.8, 4,3.4,3.4,3.7,6.2,2.9,4.4], this);" onmouseout="unplayx(&quot;1150.mp4&quot;, &quot;1&quot;, this);" title="1150"><b><i>Ω</i></b><br></div>
+<div id="item1164" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #9BBFF2; top: 326.197px; left: 518.4694px;" onmouseover="playx(&quot;1164.mp4&quot;, &quot;1164&quot;, &quot;77% Sadness  +  31% Sympathy  +  15% Empathic Pain  +  15% Romance  +  12% Confusion  +  8% Boredom  +  4% Anxiety  +  4% Awkwardness&quot;,[ 2,4.1,4.7,3.3, 6,3.9, 3, 4,2.8,4.3,3.3,6.1,3.9,2.6], this);" onmouseout="unplayx(&quot;1164.mp4&quot;, &quot;1&quot;, this);" title="1164"><b><i>X</i></b><br></div>
+<div id="item1181" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #E889A6; top: 310.2356px; left: 392.0913px;" onmouseover="playx(&quot;1181.mp4&quot;, &quot;1181&quot;, &quot;71% Empathic Pain  +  21% Anxiety  +  14% Amusement  +  14% Excitement  +  14% Fear  +  7% Boredom  +  7% Disappointment  +  7% Joy  +  7% Sadness  +  7% Surprise  +  7% Sympathy&quot;,[1.9,6.1,6.3,5.6,3.9, 3,3.2,4.3, 4,3.9,3.4,3.3,3.2,3.1], this);" onmouseout="unplayx(&quot;1181.mp4&quot;, &quot;1&quot;, this);" title="1181"><b><i>N</i></b><br></div>
+<div id="item1208" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #75BB68; top: 410.7571px; left: 542.1137px;" onmouseover="playx(&quot;1208.mp4&quot;, &quot;1208&quot;, &quot;40% Confusion  +  40% Horror  +  27% Aesthetic Appreciation  +  27% Disgust  +  13% Anxiety  +  7% Awkwardness  +  7% Fear  +  7% Interest&quot;,[1.8,4.7,3.8,3.8, 3,2.7,5.7,4.7,2.9,3.1,3.6,3.7,2.3,2.7], this);" onmouseout="unplayx(&quot;1208.mp4&quot;, &quot;1&quot;, this);" title="1208"><b><i>K</i></b><br></div>
+<div id="item1218" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #59329D; top: 530.8972px; left: 396.72px;" onmouseover="playx(&quot;1218.mp4&quot;, &quot;1218&quot;, &quot;40% Excitement  +  40% Triumph  +  33% Satisfaction  +  13% Admiration  +  13% Interest  +  13% Sympathy  +  7% Aesthetic Appreciation  +  7% Amusement  +  7% Anxiety  +  7% Awe  +  7% Joy  +  7% Pride  +  7% Sadness&quot;,[ 6,6.7,6.8,4.9,6.3,7.4,6.1,3.3,7.4,5.8,6.3, 3,6.1,6.3], this);" onmouseout="unplayx(&quot;1218.mp4&quot;, &quot;1&quot;, this);" title="1218"><b><i>P</i></b><br></div>
+<div id="item1233" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #8A4437; top: 497.1151px; left: 969.2153px;" onmouseover="playx(&quot;1233.mp4&quot;, &quot;1233&quot;, &quot;45% Amusement  +  27% Nostalgia  +  9% Anger  +  9% Boredom  +  9% Disgust  +  9% Guilt  +  9% Interest  +  9% Joy  +  9% Satisfaction&quot;,[3.7,5.3,5.6,5.1,4.9,3.7,5.4,3.4,3.9,4.7,4.8,3.8,4.2,4.6], this);" onmouseout="unplayx(&quot;1233.mp4&quot;, &quot;1&quot;, this);" title="1233"><b><i>D</i></b><br></div>
+<div id="item1254" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #627865; top: 492.805px; left: 330.6723px;" onmouseover="playx(&quot;1254.mp4&quot;, &quot;1254&quot;, &quot;27% Amusement  +  18% Aesthetic Appreciation  +  18% Boredom  +  18% Joy  +  9% Awkwardness  +  9% Calmness  +  9% Disgust  +  9% Entrancement  +  9% Excitement  +  9% Sexual Desire  +  9% Triumph&quot;,[4.7, 4,3.9,4.8,4.3,7.3,4.9,4.9,5.8,4.2,5.7,4.1,6.7, 4], this);" onmouseout="unplayx(&quot;1254.mp4&quot;, &quot;1&quot;, this);" title="1254"><b><i>Zf</i></b><br></div>
+<div id="item1263" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #517956; top: 657.6904px; left: 468.59px;" onmouseover="playx(&quot;1263.mp4&quot;, &quot;1263&quot;, &quot;33% Aesthetic Appreciation  +  33% Interest  +  33% Joy  +  29% Amusement  +  17% Adoration  +  17% Awe  +  17% Romance  +  17% Satisfaction  +  8% Admiration  +  8% Entrancement  +  8% Excitement  +  8% Surprise  +  8% Triumph&quot;,[7.7,6.3,6.7,6.1, 6, 8,5.3,2.8, 7,6.3,7.4,2.9,7.2,8.4], this);" onmouseout="unplayx(&quot;1263.mp4&quot;, &quot;1&quot;, this);" title="1263"><b><i>C</i></b><br></div>
+<div id="item1316" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #B9617D; top: 457.2668px; left: 445.528px;" onmouseover="playx(&quot;1316.mp4&quot;, &quot;1316&quot;, &quot;18% Boredom  +  18% Excitement  +  18% Horror  +  9% Amusement  +  9% Anxiety  +  9% Disappointment  +  9% Disgust  +  9% Empathic Pain  +  9% Entrancement  +  9% Fear  +  9% Interest  +  9% Satisfaction  +  9% Surprise  +  9% Triumph&quot;,[5.1, 7,7.1,6.7,5.4,6.6,6.1,4.1,6.4,5.6,5.8,4.2,5.1,6.6], this);" onmouseout="unplayx(&quot;1316.mp4&quot;, &quot;1&quot;, this);" title="1316"><b><i>P</i></b><br></div>
+<div id="item1350" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #A3C07A; top: 165.6995px; left: 520.2948px;" onmouseover="playx(&quot;1350.mp4&quot;, &quot;1350&quot;, &quot;73% Disgust  +  18% Awkwardness  +  18% Horror  +  9% Amusement  +  9% Anxiety  +  9% Confusion  +  9% Empathic Pain  +  9% Sadness&quot;,[2.2,4.4,4.1,4.4,3.9,3.7,5.1,3.6,3.4,3.1,2.8,2.9,3.6,3.3], this);" onmouseout="unplayx(&quot;1350.mp4&quot;, &quot;1&quot;, this);" title="1350"><b><i>M</i></b><br></div>
+<div id="item1358" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #3F4229; top: 576.0534px; left: 516.3689px;" onmouseover="playx(&quot;1358.mp4&quot;, &quot;1358&quot;, &quot;45% Interest  +  36% Awe  +  27% Amusement  +  27% Satisfaction  +  9% Boredom  +  9% Excitement  +  9% Nostalgia  +  9% Surprise&quot;,[7.2,5.9,5.3,5.9,4.9,7.1,3.3,3.7, 6,4.3, 7,2.4,5.8,6.7], this);" onmouseout="unplayx(&quot;1358.mp4&quot;, &quot;1&quot;, this);" title="1358"><b><i>S</i></b><br></div>
+<div id="item1391" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #374049; top: 710.0193px; left: 380.614px;" onmouseover="playx(&quot;1391.mp4&quot;, &quot;1391&quot;, &quot;46% Amusement  +  46% Awe  +  31% Joy  +  23% Admiration  +  15% Adoration  +  8% Excitement  +  8% Interest  +  8% Satisfaction  +  8% Sympathy&quot;,[3.2,5.9,6.2,4.2,4.8, 6,4.9,3.3,6.4,4.6,6.8, 5,3.7,5.4], this);" onmouseout="unplayx(&quot;1391.mp4&quot;, &quot;1&quot;, this);" title="1391"><b><i>G</i></b><br></div>
+<div id="item1418" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #874E23; top: 763.7662px; left: 379.7624px;" onmouseover="playx(&quot;1418.mp4&quot;, &quot;1418&quot;, &quot;54% Adoration  +  38% Awe  +  23% Amusement  +  23% Joy  +  15% Aesthetic Appreciation  +  15% Satisfaction  +  8% Calmness  +  8% Envy  +  8% Pride  +  8% Surprise&quot;,[6.3,4.6,6.4,6.7,6.8,7.7,4.6,1.4,7.1,5.7,7.4, 2,7.1,8.2], this);" onmouseout="unplayx(&quot;1418.mp4&quot;, &quot;1&quot;, this);" title="1418"><b><i>B</i></b><br></div>
+<div id="item1424" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #7BC9CE; top: 150.7046px; left: 972.5188px;" onmouseover="playx(&quot;1424.mp4&quot;, &quot;1424&quot;, &quot;92% Romance  +  23% Sexual Desire  +  15% Joy  +  8% Envy  +  8% Excitement  +  8% Sympathy&quot;,[6.4,6.2,6.9,5.3,5.8,7.4,4.6,2.6,6.9,6.1,6.7,4.8,5.7,6.3], this);" onmouseout="unplayx(&quot;1424.mp4&quot;, &quot;1&quot;, this);" title="1424"><b><i>W</i></b><br></div>
+<div id="item1425" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #9AC452; top: 121.7027px; left: 551.5302px;" onmouseover="playx(&quot;1425.mp4&quot;, &quot;1425&quot;, &quot;100% Disgust  +  15% Fear  +  8% Confusion  +  8% Surprise&quot;,[1.1,3.8,4.9,3.7,2.6,5.1,3.9,3.4,5.1,2.9,3.8,3.8,5.1,2.9], this);" onmouseout="unplayx(&quot;1425.mp4&quot;, &quot;1&quot;, this);" title="1425"><b><i>M</i></b><br></div>
+<div id="item1518" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #316F24; top: 609.4227px; left: 623.4664px;" onmouseover="playx(&quot;1518.mp4&quot;, &quot;1518&quot;, &quot;70% Awe  +  20% Aesthetic Appreciation  +  20% Fear  +  20% Interest  +  10% Admiration  +  10% Amusement  +  10% Anxiety  +  10% Calmness  +  10% Disgust  +  10% Horror  +  10% Surprise&quot;,[1.9,6.2,5.8,4.8,5.1,3.7,5.4,4.2,4.1,3.3,3.3, 4,2.7,3.6], this);" onmouseout="unplayx(&quot;1518.mp4&quot;, &quot;1&quot;, this);" title="1518"><b><i>G</i></b><br></div>
+<div id="item1520" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #0F394D; top: 604.281px; left: 438.6124px;" onmouseover="playx(&quot;1520.mp4&quot;, &quot;1520&quot;, &quot;40% Amusement  +  40% Awe  +  30% Triumph  +  10% Admiration  +  10% Adoration  +  10% Calmness  +  10% Interest  +  10% Joy  +  10% Relief&quot;,[6.2,6.1, 7,5.9, 7,7.4,5.2,2.9,6.3,4.6,7.4,3.2,6.1,6.9], this);" onmouseout="unplayx(&quot;1520.mp4&quot;, &quot;1&quot;, this);" title="1520"><b><i>G</i></b><br></div>
+<div id="item1537" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #8A5552; top: 476.5768px; left: 402.9185px;" onmouseover="playx(&quot;1537.mp4&quot;, &quot;1537&quot;, &quot;58% Excitement  +  25% Anxiety  +  17% Amusement  +  17% Interest  +  8% Awe  +  8% Calmness  +  8% Joy  +  8% Satisfaction&quot;,[4.4,7.2,6.4,5.4,4.2,5.2,5.6,2.9, 6, 4,6.1,3.8,2.8,6.3], this);" onmouseout="unplayx(&quot;1537.mp4&quot;, &quot;1&quot;, this);" title="1537"><b><i>P</i></b><br></div>
+<div id="item1552" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #1C5474; top: 380.5519px; left: 606.7723px;" onmouseover="playx(&quot;1552.mp4&quot;, &quot;1552&quot;, &quot;38% Interest  +  29% Confusion  +  25% Surprise  +  8% Amusement  +  8% Anxiety  +  8% Fear  +  8% Satisfaction&quot;,[3.4,6.4,6.9,3.8,3.4,3.9,4.4,4.3,3.3,3.9,4.1,7.8,3.8,4.3], this);" onmouseout="unplayx(&quot;1552.mp4&quot;, &quot;1&quot;, this);" title="1552"><b><i>S</i></b><br></div>
+<div id="item1559" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #C0771B; top: 448.4083px; left: 992.9495px;" onmouseover="playx(&quot;1559.mp4&quot;, &quot;1559&quot;, &quot;50% Nostalgia  +  17% Amusement  +  17% Anxiety  +  17% Awe  +  17% Boredom  +  17% Interest  +  8% Admiration  +  8% Joy&quot;,[5.7,6.1,5.7,5.4,4.7,5.3,6.1,2.6,5.9, 5,5.8,3.3,3.8,6.1], this);" onmouseout="unplayx(&quot;1559.mp4&quot;, &quot;1&quot;, this);" title="1559"><b><i>U</i></b><br></div>
+<div id="item1596" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #D0A995; top: 135.7765px; left: 442.6156px;" onmouseover="playx(&quot;1596.mp4&quot;, &quot;1596&quot;, &quot;58% Disgust  +  58% Empathic Pain  +  8% Anger  +  8% Anxiety  +  8% Fear  +  8% Horror&quot;,[2.1,5.7, 6,3.4,2.8,5.4,5.3,5.2,4.8,3.3,4.4,5.4, 3,2.4], this);" onmouseout="unplayx(&quot;1596.mp4&quot;, &quot;1&quot;, this);" title="1596"><b><i>N</i></b><br></div>
+<div id="item1604" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #A16657; top: 456.2849px; left: 956.9561px;" onmouseover="playx(&quot;1604.mp4&quot;, &quot;1604&quot;, &quot;33% Boredom  +  33% Nostalgia  +  25% Amusement  +  17% Awkwardness  +  17% Excitement  +  8% Calmness  +  8% Confusion  +  8% Joy  +  8% Surprise  +  8% Sympathy&quot;,[6.1,4.7,6.2,6.3,5.1,6.9,5.4,1.6,5.3,4.9,5.8,4.2,6.2,5.8], this);" onmouseout="unplayx(&quot;1604.mp4&quot;, &quot;1&quot;, this);" title="1604"><b><i>U</i></b><br></div>
+<div id="item1611" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #21308D; top: 562.6328px; left: 282.6528px;" onmouseover="playx(&quot;1611.mp4&quot;, &quot;1611&quot;, &quot;50% Amusement  +  42% Surprise  +  17% Confusion  +  17% Excitement  +  17% Interest  +  8% Anger  +  8% Fear&quot;,[3.9, 5,4.8,4.6,3.1,3.1,4.1,2.7,5.6,2.9,4.7,3.9,3.8,3.6], this);" onmouseout="unplayx(&quot;1611.mp4&quot;, &quot;1&quot;, this);" title="1611"><b><i>Ω</i></b><br></div>
+<div id="item1637" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #387C46; top: 625.586px; left: 624.4482px;" onmouseover="playx(&quot;1637.mp4&quot;, &quot;1637&quot;, &quot;50% Awe  +  25% Aesthetic Appreciation  +  17% Amusement  +  17% Calmness  +  17% Entrancement  +  17% Fear  +  8% Anxiety  +  8% Excitement  +  8% Triumph&quot;,[4.9,7.8,7.3,4.3,5.2, 6,3.8,2.3,5.8,4.3, 7,2.3,3.6,6.8], this);" onmouseout="unplayx(&quot;1637.mp4&quot;, &quot;1&quot;, this);" title="1637"><b><i>G</i></b><br></div>
+<div id="item1672" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #515E98; top: 515.4648px; left: 223.9137px;" onmouseover="playx(&quot;1672.mp4&quot;, &quot;1672&quot;, &quot;33% Amusement  +  25% Awkwardness  +  25% Confusion  +  17% Boredom  +  17% Disappointment  +  8% Awe  +  8% Disgust  +  8% Joy  +  8% Surprise  +  8% Sympathy&quot;,[3.3,4.8,5.3,5.7,4.9,6.8, 5,2.6, 7,5.7,3.9,3.6,7.2,5.2], this);" onmouseout="unplayx(&quot;1672.mp4&quot;, &quot;1&quot;, this);" title="1672"><b><i>H</i></b><br></div>
+<div id="item1687" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #574C59; top: 527.9062px; left: 496.6434px;" onmouseover="playx(&quot;1687.mp4&quot;, &quot;1687&quot;, &quot;36% Satisfaction  +  32% Interest  +  27% Amusement  +  27% Boredom  +  9% Admiration  +  9% Aesthetic Appreciation  +  9% Calmness  +  9% Excitement  +  9% Relief  +  9% Triumph  +  5% Confusion&quot;,[5.6,5.4,5.6,4.8,4.6,6.9,5.4,2.9,5.4,4.9,5.9,3.8,5.6,5.6], this);" onmouseout="unplayx(&quot;1687.mp4&quot;, &quot;1&quot;, this);" title="1687"><b><i>Y</i></b><br></div>
+<div id="item1694" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #5C666D; top: 507.0945px; left: 686.8295px;" onmouseover="playx(&quot;1694.mp4&quot;, &quot;1694&quot;, &quot;36% Aesthetic Appreciation  +  36% Entrancement  +  27% Interest  +  18% Confusion  +  9% Admiration  +  9% Amusement  +  9% Anxiety  +  9% Boredom  +  9% Excitement  +  9% Sexual Desire  +  9% Surprise&quot;,[ 6,6.9,5.7,5.1,5.7, 6, 6,3.9,5.4,5.2,6.4,5.2,5.6,5.7], this);" onmouseout="unplayx(&quot;1694.mp4&quot;, &quot;1&quot;, this);" title="1694"><b><i>O</i></b><br></div>
+<div id="item1695" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #6F6E90; top: 368.4641px; left: 597.0363px;" onmouseover="playx(&quot;1695.mp4&quot;, &quot;1695&quot;, &quot;45% Confusion  +  27% Awkwardness  +  27% Fear  +  27% Interest  +  18% Disgust  +  18% Sadness  +  9% Aesthetic Appreciation  +  9% Amusement  +  9% Anger  +  9% Anxiety  +  9% Boredom&quot;,[3.1,5.6,6.2,3.9,3.8, 3,3.9,3.8,4.4,3.8,3.4,4.6,3.7,3.7], this);" onmouseout="unplayx(&quot;1695.mp4&quot;, &quot;1&quot;, this);" title="1695"><b><i>K</i></b><br></div>
+<div id="item1711" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #235A5E; top: 752.1895px; left: 917.3295px;" onmouseover="playx(&quot;1711.mp4&quot;, &quot;1711&quot;, &quot;29% Craving  +  24% Awe  +  18% Aesthetic Appreciation  +  18% Joy  +  12% Interest  +  12% Satisfaction  +  6% Admiration  +  6% Amusement  +  6% Calmness  +  6% Entrancement  +  6% Envy  +  6% Surprise&quot;,[8.4,6.1,7.2,6.2,4.6,8.9,4.6,1.2,6.3,5.1,7.6,1.7,6.8, 8], this);" onmouseout="unplayx(&quot;1711.mp4&quot;, &quot;1&quot;, this);" title="1711"><b><i>L</i></b><br></div>
+<div id="item1742" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #E36D61; top: 295.4244px; left: 290.481px;" onmouseover="playx(&quot;1742.mp4&quot;, &quot;1742&quot;, &quot;46% Fear  +  31% Anxiety  +  31% Horror  +  15% Amusement  +  15% Surprise  +  12% Anger  +  12% Disappointment  +  8% Confusion  +  8% Relief&quot;,[2.3,6.9,6.8,5.2,4.2,3.4,3.6, 3, 4,3.2,6.2,4.9, 2, 4], this);" onmouseout="unplayx(&quot;1742.mp4&quot;, &quot;1&quot;, this);" title="1742"><b><i>Q</i></b><br></div>
+<div id="item1779" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #EB5B42; top: 311.6864px; left: 224.6811px;" onmouseover="playx(&quot;1779.mp4&quot;, &quot;1779&quot;, &quot;73% Fear  +  45% Anxiety  +  9% Boredom  +  9% Confusion  +  9% Excitement  +  9% Horror&quot;,[4.6,6.2,6.6, 4,5.3,6.1,5.4,3.6, 5,5.2,4.9,4.2,3.3, 5], this);" onmouseout="unplayx(&quot;1779.mp4&quot;, &quot;1&quot;, this);" title="1779"><b><i>Q</i></b><br></div>
+<div id="item1876" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #35915F; top: 464.8118px; left: 597.2427px;" onmouseover="playx(&quot;1876.mp4&quot;, &quot;1876&quot;, &quot;29% Aesthetic Appreciation  +  25% Satisfaction  +  17% Boredom  +  17% Calmness  +  17% Interest  +  12% Admiration  +  12% Awe  +  8% Surprise&quot;,[5.8,4.8,6.7,5.8,5.8,6.8,5.6, 4,6.1,5.1, 6, 3, 7,6.7], this);" onmouseout="unplayx(&quot;1876.mp4&quot;, &quot;1&quot;, this);" title="1876"><b><i>C</i></b><br></div>
+<div id="item1901" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #D29588; top: 205.3619px; left: 475.5371px;" onmouseover="playx(&quot;1901.mp4&quot;, &quot;1901&quot;, &quot;42% Disgust  +  33% Anger  +  33% Horror  +  8% Anxiety  +  8% Awkwardness  +  8% Contempt  +  8% Fear  +  8% Sadness&quot;,[1.8,6.1,7.1,5.9,1.7, 4,5.7,4.9,2.3,2.7,4.1,5.8, 3,2.3], this);" onmouseout="unplayx(&quot;1901.mp4&quot;, &quot;1&quot;, this);" title="1901"><b><i>M</i></b><br></div>
+<div id="item1921" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #2C6F2E; top: 551.731px; left: 638.4109px;" onmouseover="playx(&quot;1921.mp4&quot;, &quot;1921&quot;, &quot;46% Aesthetic Appreciation  +  46% Interest  +  31% Excitement  +  23% Awe  +  15% Surprise  +  8% Entrancement  +  8% Fear  +  8% Horror  +  8% Joy  +  4% Amusement&quot;,[4.4,5.1,5.8,3.7,3.2,4.8,4.2,3.3,5.3,3.1,7.2,2.9,3.9,5.8], this);" onmouseout="unplayx(&quot;1921.mp4&quot;, &quot;1&quot;, this);" title="1921"><b><i>C</i></b><br></div>
+<div id="item1972" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #7BBEC2; top: 207.7384px; left: 944.5838px;" onmouseover="playx(&quot;1972.mp4&quot;, &quot;1972&quot;, &quot;50% Romance  +  33% Awkwardness  +  33% Disgust  +  25% Amusement  +  25% Joy  +  8% Confusion&quot;,[4.1,5.1, 5,5.1,5.1,5.2,5.2,3.3,5.9,5.6,3.6,3.3, 6,4.6], this);" onmouseout="unplayx(&quot;1972.mp4&quot;, &quot;1&quot;, this);" title="1972"><b><i>W</i></b><br></div>
+<div id="item1985" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #C78E89; top: 248.8951px; left: 480.9857px;" onmouseover="playx(&quot;1985.mp4&quot;, &quot;1985&quot;, &quot;30% Disgust  +  30% Sadness  +  20% Anger  +  20% Anxiety  +  20% Fear  +  10% Confusion  +  10% Disappointment  +  10% Horror&quot;,[2.3,6.2,5.6, 4,4.9,2.6,6.4,3.9,3.3,5.9,4.6,3.8,2.4,2.6], this);" onmouseout="unplayx(&quot;1985.mp4&quot;, &quot;1&quot;, this);" title="1985"><b><i>X</i></b><br></div>
+<div id="item1989" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #77A1B9; top: 170.748px; left: 967.2528px;" onmouseover="playx(&quot;1989.mp4&quot;, &quot;1989&quot;, &quot;60% Romance  +  20% Boredom  +  20% Sexual Desire  +  10% Admiration  +  10% Interest  +  10% Pride&quot;,[7.2,5.8,6.8,6.8,6.3,8.1,5.3,2.9,6.8,6.4,6.7,2.2,7.7,7.4], this);" onmouseout="unplayx(&quot;1989.mp4&quot;, &quot;1&quot;, this);" title="1989"><b><i>W</i></b><br></div>
+<div id="item2003" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #674D73; top: 454.8705px; left: 447.9108px;" onmouseover="playx(&quot;2003.mp4&quot;, &quot;2003&quot;, &quot;20% Interest  +  20% Surprise  +  10% Admiration  +  10% Adoration  +  10% Aesthetic Appreciation  +  10% Amusement  +  10% Anxiety  +  10% Boredom  +  10% Disappointment  +  10% Excitement  +  10% Horror  +  10% Satisfaction&quot;,[2.6,6.6,6.4, 4,4.7,5.6,5.7,2.7,4.3,4.9,5.2,4.2,3.4,4.8], this);" onmouseout="unplayx(&quot;2003.mp4&quot;, &quot;1&quot;, this);" title="2003"><b><i>Ω</i></b><br></div>
+<div id="item2014" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #627D9D; top: 331.5111px; left: 614.02px;" onmouseover="playx(&quot;2014.mp4&quot;, &quot;2014&quot;, &quot;45% Confusion  +  18% Disappointment  +  18% Disgust  +  9% Anger  +  9% Anxiety  +  9% Awe  +  9% Awkwardness  +  9% Contempt  +  9% Sadness  +  9% Surprise&quot;,[ 3,5.6,5.9,5.8,5.2,3.8, 5,3.4,3.2,3.1,3.7,4.6,3.1,3.8], this);" onmouseout="unplayx(&quot;2014.mp4&quot;, &quot;1&quot;, this);" title="2014"><b><i>K</i></b><br></div>
+<div id="item2056" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #F08011; top: 461.4711px; left: 1026.7388px;" onmouseover="playx(&quot;2056.mp4&quot;, &quot;2056&quot;, &quot;82% Nostalgia  +  18% Amusement  +  9% Boredom  +  9% Contempt  +  9% Joy&quot;,[6.7,5.1, 6,6.4,5.8,7.4,5.3,2.6,6.9,7.4,5.2,2.6,7.8, 6], this);" onmouseout="unplayx(&quot;2056.mp4&quot;, &quot;1&quot;, this);" title="2056"><b><i>U</i></b><br></div>
+<div id="item2106" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #84B444; top: 146.7617px; left: 542.4355px;" onmouseover="playx(&quot;2106.mp4&quot;, &quot;2106&quot;, &quot;82% Disgust  +  27% Interest  +  9% Horror  +  9% Surprise  +  9% Sympathy&quot;,[2.4,5.1, 6,5.2, 5,3.3,5.1,4.1, 3, 4,3.4,4.7,2.6,2.2], this);" onmouseout="unplayx(&quot;2106.mp4&quot;, &quot;1&quot;, this);" title="2106"><b><i>M</i></b><br></div>
+<div id="item2108" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #276E22; top: 615.8904px; left: 634.1827px;" onmouseover="playx(&quot;2108.mp4&quot;, &quot;2108&quot;, &quot;55% Awe  +  27% Aesthetic Appreciation  +  18% Excitement  +  18% Interest  +  18% Satisfaction  +  9% Amusement  +  9% Fear  +  9% Joy&quot;,[4.9,7.4,6.7, 5,5.1,5.7,6.2,3.7,6.4,4.7, 7,3.8,3.1,5.8], this);" onmouseout="unplayx(&quot;2108.mp4&quot;, &quot;1&quot;, this);" title="2108"><b><i>G</i></b><br></div>
+<div id="item2127" class="genre scanme ui-draggable ui-draggable-handle" scan="true" style="color: #4E2F5A; top: 665.9574px; left: 254.1054px;" onmouseover="playx(&quot;2127.mp4&quot;, &quot;2127&quot;, &quot;73% Amusement  +  18% Adoration  +  18% Sadness  +  18% Sympathy  +  9% Anger  +  9% Awe  +  9% Confusion  +  9% Guilt  +  9% Joy  +  9% Surprise&quot;,[ 6,4.4,4.8,3.9, 5,5.3,3.7,2.7,2.7,4.2,3.9,3.8,4.6,5.3], this);" onmouseout="unplayx(&quot;2127.mp4&quot;, &quot;1&quot;, this);" title="2127"><b><i>D</i></b><br></div>
+<div id="bottombar">45% Romance  +  41% Adoration  +  27% Joy  +  18% Admiration  +  14% Awe  +  14% Pride  +  14% Satisfaction  +  9% Excitement  +  9% Nostalgia  +  5% Envy  +  5% Triumph</div>
+<div id="dimbar" class="radarChart"><svg width="300" height="300" class="radar.radarChart"><g transform="translate(150,150)"><defs><filter id="glow"><feGaussianBlur stdDeviation="2.5" result="coloredBlur"></feGaussianBlur><feMerge><feMergeNode in="coloredBlur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g class="axisWrapper"><circle class="gridCircle" r="80" style="fill: rgb(205, 205, 205); stroke: rgb(205, 205, 205); fill-opacity: 0.1; filter: url(&quot;#glow&quot;);"></circle><circle class="gridCircle" r="71.11111111111111" style="fill: rgb(205, 205, 205); stroke: rgb(205, 205, 205); fill-opacity: 0.1; filter: url(&quot;#glow&quot;);"></circle><circle class="gridCircle" r="62.22222222222223" style="fill: rgb(205, 205, 205); stroke: rgb(205, 205, 205); fill-opacity: 0.1; filter: url(&quot;#glow&quot;);"></circle><circle class="gridCircle" r="53.333333333333336" style="fill: rgb(205, 205, 205); stroke: rgb(205, 205, 205); fill-opacity: 0.1; filter: url(&quot;#glow&quot;);"></circle><circle class="gridCircle" r="44.44444444444444" style="fill: rgb(205, 205, 205); stroke: rgb(205, 205, 205); fill-opacity: 0.1; filter: url(&quot;#glow&quot;);"></circle><circle class="gridCircle" r="35.55555555555556" style="fill: rgb(205, 205, 205); stroke: rgb(205, 205, 205); fill-opacity: 0.1; filter: url(&quot;#glow&quot;);"></circle><circle class="gridCircle" r="26.666666666666668" style="fill: rgb(205, 205, 205); stroke: rgb(205, 205, 205); fill-opacity: 0.1; filter: url(&quot;#glow&quot;);"></circle><circle class="gridCircle" r="17.77777777777778" style="fill: rgb(205, 205, 205); stroke: rgb(205, 205, 205); fill-opacity: 0.1; filter: url(&quot;#glow&quot;);"></circle><circle class="gridCircle" r="8.88888888888889" style="fill: rgb(205, 205, 205); stroke: rgb(205, 205, 205); fill-opacity: 0.1; filter: url(&quot;#glow&quot;);"></circle><g class="axis"><line x1="0" y1="0" x2="5.3884459162483544e-15" y2="-88" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="6.123233995736766e-15" y="-100" style="font-size: 10.5px;"><tspan x="6.123233995736766e-15" y="-100" dy="0.35em">Approach</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="38.18176904234512" y2="-79.28526037541289" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="43.38837391175582" y="-90.09688679024191" style="font-size: 10.5px;"><tspan x="43.38837391175582" y="-90.09688679024191" dy="0.35em">Arousal</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="68.80117045718663" y2="-54.867102563568544" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="78.18314824680299" y="-62.34898018587335" style="font-size: 10.5px;"><tspan x="78.18314824680299" y="-62.34898018587335" dy="0.35em">Attention</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="85.79365627200048" y2="-19.581842188155665" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="97.49279121818236" y="-22.25209339563144" style="font-size: 10.5px;"><tspan x="97.49279121818236" y="-22.25209339563144" dy="0.35em">Certainty</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="85.79365627200048" y2="19.581842188155665" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="97.49279121818236" y="22.25209339563144" style="font-size: 10.5px;"><tspan x="97.49279121818236" y="22.25209339563144" dy="0.35em">Commitment</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="68.80117045718663" y2="54.867102563568544" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="78.18314824680299" y="62.34898018587335" style="font-size: 10.5px;"><tspan x="78.18314824680299" y="62.34898018587335" dy="0.35em">Control</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="38.18176904234512" y2="79.28526037541289" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="43.38837391175582" y="90.09688679024191" style="font-size: 10.5px;"><tspan x="43.38837391175582" y="90.09688679024191" dy="0.35em">Dominance</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="5.3884459162483544e-15" y2="88" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="6.123233995736766e-15" y="100" style="font-size: 10.5px;"><tspan x="6.123233995736766e-15" y="100" dy="0.35em">Effort</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="-38.18176904234511" y2="79.28526037541289" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="-43.38837391175581" y="90.09688679024191" style="font-size: 10.5px;"><tspan x="-43.38837391175581" y="90.09688679024191" dy="0.35em">Fairness</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="-68.80117045718663" y2="54.86710256356856" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="-78.18314824680299" y="62.34898018587336" style="font-size: 10.5px;"><tspan x="-78.18314824680299" y="62.34898018587336" dy="0.35em">Identity</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="-85.79365627200048" y2="19.581842188155676" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="-97.49279121818236" y="22.25209339563145" style="font-size: 10.5px;"><tspan x="-97.49279121818236" y="22.25209339563145" dy="0.35em">Obstruction</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="-85.79365627200048" y2="-19.581842188155658" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="-97.49279121818236" y="-22.252093395631427" style="font-size: 10.5px;"><tspan x="-97.49279121818236" y="-22.252093395631427" dy="0.35em">Safety</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="-68.80117045718663" y2="-54.86710256356854" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="-78.18314824680299" y="-62.34898018587334" style="font-size: 10.5px;"><tspan x="-78.18314824680299" y="-62.34898018587334" dy="0.35em">Upswing</tspan></text></g><g class="axis"><line x1="0" y1="0" x2="-38.18176904234513" y2="-79.28526037541288" class="line" style="stroke: white; stroke-width: 2px;"></line><text class="legend" fill="#cccccc" text-anchor="middle" dy="0.35em" x="-43.38837391175583" y="-90.09688679024191" style="font-size: 10.5px;"><tspan x="-43.38837391175583" y="-90.09688679024191" dy="0.35em">Valence</tspan></text></g></g><g class="radarWrapper"><path class="radarArea" d="M2.7758660780673336e-15,-45.33333333333333C5.9586700172144695,-45.6937208804943,15.22853515975143,-45.08904576434464,20.44074504287163,-42.44564444340286S31.83461978251688,-32.71270946529985,34.74806588746799,-27.710657860388153S38.706399932744624,-14.709035858230997,39.863719075879004,-9.09863374399152S41.979944448010016,3.1730454775774346,42.46352684169721,9.692022901208361S46.56457246593117,29.808560062713106,43.08760170046031,34.361215746881314S25.746861993627185,39.86390982436194,19.28372173855814,40.043060795663074S5.611563025920421,35.915943102716525,2.1771498651508502e-15,35.55555555555556S-13.956930527748488,39.64853153801005,-18.12669843424465,37.64047714792329S-26.357765049801976,26.86517520895208,-27.798452709974395,22.168526288310527S-25.661512103926587,11.078897264213271,-27.731282835394097,6.329484343646279S-40.857139388267264,-4.637601105607736,-41.59692425309114,-9.494226515469409S-36.01016231139986,-21.465693246735814,-32.663181934219914,-26.048018388764863S-24.183199028691135,-37.150263553977794,-19.283721738558146,-40.04306079566307S-5.958670017214464,-44.97294578617236,2.7758660780673336e-15,-45.33333333333333" style="fill: rgb(237, 201, 81); fill-opacity: 0.35;"></path><path class="radarStroke" d="M2.7758660780673336e-15,-45.33333333333333C5.9586700172144695,-45.6937208804943,15.22853515975143,-45.08904576434464,20.44074504287163,-42.44564444340286S31.83461978251688,-32.71270946529985,34.74806588746799,-27.710657860388153S38.706399932744624,-14.709035858230997,39.863719075879004,-9.09863374399152S41.979944448010016,3.1730454775774346,42.46352684169721,9.692022901208361S46.56457246593117,29.808560062713106,43.08760170046031,34.361215746881314S25.746861993627185,39.86390982436194,19.28372173855814,40.043060795663074S5.611563025920421,35.915943102716525,2.1771498651508502e-15,35.55555555555556S-13.956930527748488,39.64853153801005,-18.12669843424465,37.64047714792329S-26.357765049801976,26.86517520895208,-27.798452709974395,22.168526288310527S-25.661512103926587,11.078897264213271,-27.731282835394097,6.329484343646279S-40.857139388267264,-4.637601105607736,-41.59692425309114,-9.494226515469409S-36.01016231139986,-21.465693246735814,-32.663181934219914,-26.048018388764863S-24.183199028691135,-37.150263553977794,-19.283721738558146,-40.04306079566307S-5.958670017214464,-44.97294578617236,2.7758660780673336e-15,-45.33333333333333" style="stroke-width: 2px; stroke: rgb(237, 201, 81); fill: none; filter: url(&quot;#glow&quot;);"></path><circle class="radarCircle" r="4" cx="2.7758660780673336e-15" cy="-45.33333333333333" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="20.44074504287163" cy="-42.44564444340286" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="34.74806588746799" cy="-27.710657860388153" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="39.863719075879004" cy="-9.09863374399152" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="42.46352684169721" cy="9.692022901208361" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="43.08760170046031" cy="34.361215746881314" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="19.28372173855814" cy="40.043060795663074" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="2.1771498651508502e-15" cy="35.55555555555556" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="-18.12669843424465" cy="37.64047714792329" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="-27.798452709974395" cy="22.168526288310527" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="-27.731282835394097" cy="6.329484343646279" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="-41.59692425309114" cy="-9.494226515469409" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="-32.663181934219914" cy="-26.048018388764863" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle><circle class="radarCircle" r="4" cx="-19.283721738558146" cy="-40.04306079566307" style="fill: rgb(237, 201, 81); fill-opacity: 0.8;"></circle></g><g class="radarCircleWrapper"><circle class="radarInvisibleCircle" r="6" cx="2.7758660780673336e-15" cy="-45.33333333333333" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="20.44074504287163" cy="-42.44564444340286" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="34.74806588746799" cy="-27.710657860388153" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="39.863719075879004" cy="-9.09863374399152" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="42.46352684169721" cy="9.692022901208361" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="43.08760170046031" cy="34.361215746881314" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="19.28372173855814" cy="40.043060795663074" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="2.1771498651508502e-15" cy="35.55555555555556" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="-18.12669843424465" cy="37.64047714792329" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="-27.798452709974395" cy="22.168526288310527" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="-27.731282835394097" cy="6.329484343646279" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="-41.59692425309114" cy="-9.494226515469409" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="-32.663181934219914" cy="-26.048018388764863" style="fill: none; pointer-events: all;"></circle><circle class="radarInvisibleCircle" r="6" cx="-19.283721738558146" cy="-40.04306079566307" style="fill: none; pointer-events: all;"></circle></g><text class="tooltip" style="opacity: 0;"></text></g></svg></div>
+
+
+<div class="remodal-overlay remodal-is-closed" style="display: none;"></div><div class="remodal-wrapper remodal-is-closed" style="display: none;"><div class="remodal remodal-is-initialized remodal-is-closed" id="modal" data-remodal-id="modal" role="dialog" aria-labelledby="modal1Title" aria-describedby="modal1Desc" tabindex="-1">
+<button data-remodal-action="close" class="remodal-close" aria-label="Close"></button>
+<div>
+<h2 id="modal1Title">The Emotions Evoked by Video</h2>
+<p id="modal1Desc">
+  Within this interactive map, videos are plotted along the 27 dimensions of self-reported emotional experience they can reliably evoke. Each letter corresponds to a video. Float over to play. Click and drag to rearrange. <b>Warning:</b> While many of the more intense videos are censored, there is still some explicit content. Viewer discretion is advised.
+</p>
+</div>
+<br>
+<button data-remodal-action="confirm" class="remodal-confirm">Continue</button>
